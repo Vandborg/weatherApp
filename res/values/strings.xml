@@ -4,5 +4,8 @@
     <string name="app_name">weatherApp</string>
     <string name="hello_world">Hello world!</string>
     <string name="menu_settings">Settings</string>
+    <string name="weather_feed">http://balder.ucn.dk/weather/Weather.asmx/</string>
+    <string name="no_content">No content</string>
+    <string name="image_description">Weather icon</string>
 
 </resources>
