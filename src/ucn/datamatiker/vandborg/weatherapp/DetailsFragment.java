@@ -6,6 +6,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.concurrent.TimeUnit;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -16,6 +17,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
@@ -23,11 +25,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 public class DetailsFragment extends Fragment {
 	
 	private static final String TAG = "WEATHER";
+	private Boolean stopThread = false;
 
 	private View view = getView();
 	private Handler handler = new Handler();
@@ -36,6 +40,20 @@ public class DetailsFragment extends Fragment {
 	private String description = "";
 	private String temp = "";
 	private String wind = "";
+	private Drawable image = null;
+
+	private Thread t = new Thread(new Runnable() {
+		public void run() {
+			while (!stopThread) {
+				try {
+					refreshWeather();
+					Thread.currentThread().sleep(TimeUnit.HOURS.toMillis(1));
+				} catch (InterruptedException e) {
+					Log.d(TAG, "InterruptedException");
+				}
+			}
+		}
+	});
 
 	public void refreshWeather(){
 
@@ -68,22 +86,25 @@ public class DetailsFragment extends Fragment {
 					switch (i) {
 						case 5: //time
 							time = weatherData.item(i).getTextContent();
-							//timeTextView.setText(time);
 							break;
 						case 7: //description
 							description = weatherData.item(i).getTextContent();
-							//descriptionTextView.setText(description);
 							break;
 						case 9: //temp
 							temp = weatherData.item(i).getTextContent();
-							//tempTextView.setText(temp);
 							break;
 						case 13: //Wind direction
 							wind = weatherData.item(i).getTextContent();
-							//windTextView.setText(wind);
 							break;
 						case 15: // Wind speed
 							wind += " " + weatherData.item(i).getTextContent();
+							break;
+						case 19: // IconURL
+							String iconURL = getString(R.string.image_base_URL)
+									+ weatherData.item(i).getTextContent();
+							Log.d(TAG, iconURL);
+							InputStream is = (InputStream) new URL(iconURL).getContent();
+							image = Drawable.createFromStream(is, "weather icon");
 							break;
 						default:
 							break;
@@ -95,10 +116,6 @@ public class DetailsFragment extends Fragment {
 						updateUI();
 					}
 				});
-
-				Log.d(TAG, docEle.getChildNodes().item(1).getNodeName());
-				Log.d(TAG, docEle.getChildNodes().item(1).getTextContent());
-
 			}
 		  
 		} catch (MalformedURLException e) {
@@ -110,8 +127,8 @@ public class DetailsFragment extends Fragment {
 		} catch (SAXException e) {
 			Log.d(TAG, "SAX Exception");
 		} finally {
-		 
-		  }
+
+		}
 		 
 	}
 
@@ -120,31 +137,33 @@ public class DetailsFragment extends Fragment {
 		TextView descriptionTextView = (TextView) view.findViewById(R.id.description);
 		TextView tempTextView = (TextView) view.findViewById(R.id.temp);
 		TextView windTextView = (TextView) view.findViewById(R.id.wind);
+		ImageView imageView = (ImageView) view.findViewById(R.id.image);
 		timeTextView.setText(time);
 		descriptionTextView.setText(description);
 		tempTextView.setText(temp + " Celsius");
 		windTextView.setText(wind + " km/h");
+		imageView.setImageDrawable(image);
 		view.invalidate();
 	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
-		//refreshWeather();
 
 		View v = inflater.inflate(R.layout.details_fragment, container, false);
 		view = v;
 
-		Thread t = new Thread(new Runnable() {
-			public void run() {
-				refreshWeather();
-			}
-		});
-
+		stopThread = false;
 		t.start();
 
 		return v;
+	}
+
+	@Override
+	public void onDestroyView() {
+
+		super.onDestroyView();
+		stopThread = true;
 	}
 	
 }

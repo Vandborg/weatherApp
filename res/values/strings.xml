@@ -7,5 +7,6 @@
     <string name="weather_feed">http://balder.ucn.dk/weather/Weather.asmx/</string>
     <string name="no_content">No content</string>
     <string name="image_description">Weather icon</string>
+    <string name="image_base_URL">http://balder.ucn.dk/weather/img/weather/</string>
 
 </resources>
